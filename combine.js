@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Resolve script directory (important for ESM)
+// Resolve script directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,7 +13,10 @@ if (!fs.existsSync(configPath)) {
     process.exit(1);
 }
 
-const { vaultPath } = JSON.parse(fs.readFileSync(configPath, "utf8"));
+const { vaultPath, chunkSize = 10000 } = JSON.parse(
+    fs.readFileSync(configPath, "utf8")
+);
+
 if (!vaultPath || !fs.existsSync(vaultPath)) {
     console.error("❌ Invalid or missing vaultPath in config.json");
     process.exit(1);
@@ -37,24 +40,49 @@ function getMarkdownFiles(dir) {
     return results;
 }
 
-// Read + combine all files
 function combineFiles() {
     console.log("📚 Scanning vault:", vaultPath);
 
     const mdFiles = getMarkdownFiles(vaultPath);
     console.log(`📄 Found ${mdFiles.length} markdown files`);
 
-    let output = "";
+    let partIndex = 1;
+    let currentOutput = "";
+    let currentLength = 0;
 
-    mdFiles.forEach((filePath) => {
-        const content = fs.readFileSync(filePath, "utf8");
-        output += `\n\n---\n# ${path.basename(filePath)}\n\n${content}\n`;
+    const outputs = [];
+
+    for (const filePath of mdFiles) {
+        const noteContent = `\n\n---\n# ${path.basename(filePath)}\n\n${fs.readFileSync(filePath, "utf8")}\n`;
+        const noteLength = noteContent.length;
+
+        // If adding this note exceeds the chunk size, start a new file
+        if (currentLength + noteLength > chunkSize) {
+            outputs.push(currentOutput);
+            currentOutput = "";       // reset buffer
+            currentLength = 0;
+        }
+
+        currentOutput += noteContent;
+        currentLength += noteLength;
+    }
+
+    // Push the final part if it contains anything
+    if (currentOutput.length > 0) {
+        outputs.push(currentOutput);
+    }
+
+    // Write each part to disk
+    outputs.forEach((content, index) => {
+        const outputPath = path.join(
+            __dirname,
+            `combined_vault_part_${index + 1}.md`
+        );
+        fs.writeFileSync(outputPath, content, "utf8");
+        console.log(`✅ Created: ${outputPath}`);
     });
 
-    const outputPath = path.join(__dirname, "combined_vault.md");
-    fs.writeFileSync(outputPath, output, "utf8");
-
-    console.log("✅ Combined document created at:", outputPath);
+    console.log(`🎉 Finished. Created ${outputs.length} output files.`);
 }
 
 combineFiles();
