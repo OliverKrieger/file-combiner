@@ -22,6 +22,13 @@ if (!vaultPath || !fs.existsSync(vaultPath)) {
     process.exit(1);
 }
 
+// Ensure output folder exists
+const outputDir = path.join(__dirname, "output");
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+    console.log("📁 Created output folder:", outputDir);
+}
+
 // Recursively collect all .md files
 function getMarkdownFiles(dir) {
     let results = [];
@@ -46,20 +53,18 @@ function combineFiles() {
     const mdFiles = getMarkdownFiles(vaultPath);
     console.log(`📄 Found ${mdFiles.length} markdown files`);
 
-    let partIndex = 1;
     let currentOutput = "";
     let currentLength = 0;
-
     const outputs = [];
 
     for (const filePath of mdFiles) {
         const noteContent = `\n\n---\n# ${path.basename(filePath)}\n\n${fs.readFileSync(filePath, "utf8")}\n`;
         const noteLength = noteContent.length;
 
-        // If adding this note exceeds the chunk size, start a new file
+        // Start new part if adding this would exceed the limit
         if (currentLength + noteLength > chunkSize) {
             outputs.push(currentOutput);
-            currentOutput = "";       // reset buffer
+            currentOutput = "";
             currentLength = 0;
         }
 
@@ -67,17 +72,13 @@ function combineFiles() {
         currentLength += noteLength;
     }
 
-    // Push the final part if it contains anything
     if (currentOutput.length > 0) {
         outputs.push(currentOutput);
     }
 
-    // Write each part to disk
+    // Write files into /output
     outputs.forEach((content, index) => {
-        const outputPath = path.join(
-            __dirname,
-            `combined_vault_part_${index + 1}.md`
-        );
+        const outputPath = path.join(outputDir, `combined_vault_part_${index + 1}.md`);
         fs.writeFileSync(outputPath, content, "utf8");
         console.log(`✅ Created: ${outputPath}`);
     });
