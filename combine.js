@@ -53,6 +53,23 @@ function combineFiles() {
     const mdFiles = getMarkdownFiles(vaultPath);
     console.log(`📄 Found ${mdFiles.length} markdown files`);
 
+    // NEW: If chunkSize === -1, combine everything into a single file
+    if (chunkSize === -1) {
+        let combined = "";
+
+        for (const filePath of mdFiles) {
+            combined += `\n\n---\n# ${path.basename(filePath)}\n\n${fs.readFileSync(filePath, "utf8")}\n`;
+        }
+
+        const outputPath = path.join(outputDir, "combined_vault.md");
+        fs.writeFileSync(outputPath, combined, "utf8");
+
+        console.log(`✅ Created: ${outputPath}`);
+        console.log("🎉 Finished. Created 1 output file.");
+        return;
+    }
+
+    // DEFAULT BEHAVIOR: chunk by size
     let currentOutput = "";
     let currentLength = 0;
     const outputs = [];
@@ -61,7 +78,6 @@ function combineFiles() {
         const noteContent = `\n\n---\n# ${path.basename(filePath)}\n\n${fs.readFileSync(filePath, "utf8")}\n`;
         const noteLength = noteContent.length;
 
-        // Start new part if adding this would exceed the limit
         if (currentLength + noteLength > chunkSize) {
             outputs.push(currentOutput);
             currentOutput = "";
@@ -76,7 +92,6 @@ function combineFiles() {
         outputs.push(currentOutput);
     }
 
-    // Write files into /output
     outputs.forEach((content, index) => {
         const outputPath = path.join(outputDir, `combined_vault_part_${index + 1}.md`);
         fs.writeFileSync(outputPath, content, "utf8");
@@ -85,5 +100,6 @@ function combineFiles() {
 
     console.log(`🎉 Finished. Created ${outputs.length} output files.`);
 }
+
 
 combineFiles();
