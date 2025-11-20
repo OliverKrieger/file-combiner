@@ -28,6 +28,12 @@ if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
     console.log("📁 Created output folder:", outputDir);
 }
+else{
+    // Clear existing output folder
+    fs.rmSync(outputDir, { recursive: true, force: true });
+    fs.mkdirSync(outputDir, { recursive: true });
+    console.log("📁 Recreated output folder:", outputDir);
+}
 
 // Recursively collect all .md files
 function getMarkdownFiles(dir) {
