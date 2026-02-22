@@ -7,6 +7,6 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "combine": "node combine.js"
+    "combine": "node scripts/combine/index.js"
   }
 }
