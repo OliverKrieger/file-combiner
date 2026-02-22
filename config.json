@@ -1,4 +1,10 @@
 {
   "vaultPath": "C:/UserDocuments/DnD/TheShatteredCrown/The Shattered Crown",
-  "chunkSize": -1
+  "chunkSize": -1,
+
+  "outputName": "combined_vault",
+  "includeExtensions": [".md"],
+
+  "excludeDirs": [".obsidian", "imgs", "Maps", "Wallpapers", "output"],
+  "excludeFiles": ["combined_vault.md"]
 }
