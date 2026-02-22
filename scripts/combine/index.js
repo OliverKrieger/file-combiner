@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = findProjectRoot(__dirname);
 
 // output folder (recreate)
-const outputDir = path.join(__dirname, "output");
+const outputDir = path.join(projectRoot, "output");
 if (fs.existsSync(outputDir)) fs.rmSync(outputDir, { recursive: true, force: true });
 fs.mkdirSync(outputDir, { recursive: true });
 
