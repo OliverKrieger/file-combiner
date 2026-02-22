@@ -3,6 +3,18 @@
 import fs from "fs";
 import path from "path";
 
+function atomicWriteFile(destPath, content) {
+    const dir = path.dirname(destPath);
+    const tmpPath = path.join(dir, `.${path.basename(destPath)}.${Date.now()}.tmp`);
+
+    fs.writeFileSync(tmpPath, content, "utf8");
+
+    // ensure overwrite is clean on Windows
+    if (fs.existsSync(destPath)) fs.rmSync(destPath, { force: true });
+
+    fs.renameSync(tmpPath, destPath);
+}
+
 export function buildHeader(sourcePath, filePath) {
     const rel = path.relative(sourcePath, filePath).replace(/\\/g, "/");
     return `\n\n---\n# ${rel}\n\n`;
@@ -15,7 +27,7 @@ export function writeCombined({ files, sourcePath, outputDir, outputBaseName, ch
             combined += `${buildHeader(sourcePath, filePath)}${fs.readFileSync(filePath, "utf8")}\n`;
         }
         const outPath = path.join(outputDir, `${outputBaseName}.md`);
-        fs.writeFileSync(outPath, combined, "utf8");
+        atomicWriteFile(outPath, combined);
         return [outPath];
     }
 
@@ -38,7 +50,7 @@ export function writeCombined({ files, sourcePath, outputDir, outputBaseName, ch
     const outPaths = [];
     chunks.forEach((content, i) => {
         const outPath = path.join(outputDir, `${outputBaseName}_part_${i + 1}.md`);
-        fs.writeFileSync(outPath, content, "utf8");
+        atomicWriteFile(outPath, content);
         outPaths.push(outPath);
     });
     return outPaths;

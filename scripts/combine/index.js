@@ -9,6 +9,7 @@ import { loadConfig, normalizeConfig } from "./config.js";
 import { parseCliArgs } from "./args.js";
 import { buildOptions } from "./options.js";
 import { sanitizeFilePart } from "./utils.js";
+import { cleanupPreviousOutputs } from "./cleanup.js";
 import { collectFilesRecursive } from "./walk.js";
 import { writeCombined } from "./render.js";
 
@@ -19,8 +20,7 @@ const projectRoot = findProjectRoot(__dirname);
 
 // output folder (recreate)
 const outputDir = path.join(projectRoot, "output");
-if (fs.existsSync(outputDir)) fs.rmSync(outputDir, { recursive: true, force: true });
-fs.mkdirSync(outputDir, { recursive: true });
+if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
 try {
     const cfg = normalizeConfig(loadConfig(projectRoot));
@@ -38,6 +38,9 @@ try {
         .map((x) => x.p);
 
     const outputBaseName = sanitizeFilePart(opts.outputName);
+
+    // delete only files for this base name (not the whole output folder)
+    cleanupPreviousOutputs(outputDir, outputBaseName);
 
     console.log("📚 Scanning:", opts.sourcePath);
     console.log("🧩 Include:", [...opts.allowedExtensions].join(", "));
