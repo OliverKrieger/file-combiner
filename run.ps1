@@ -8,32 +8,21 @@ param(
     [string]$ExcludeMode = "merge"
 )
 
-# Ensure we execute from the repo root (where this script lives),
-# so `npm run combine` uses the correct package.json.
 Push-Location $PSScriptRoot
 try {
-    $forward = @()
+    $nodeArgs = @("scripts/combine/index.js")
 
-    if ($Path) { $forward += @("--path", $Path) }
-    if ($Name) { $forward += @("--name", $Name) }
-    if ($PSBoundParameters.ContainsKey("ChunkSize")) { $forward += @("--chunkSize", $ChunkSize) }
-    if ($Include) { $forward += @("--include", $Include) }
-    if ($Exclude) { $forward += @("--exclude", $Exclude) }
+    if ($Path) { $nodeArgs += @("--path", $Path) }
+    if ($Name) { $nodeArgs += @("--name", $Name) }
+    if ($PSBoundParameters.ContainsKey("ChunkSize")) { $nodeArgs += @("--chunkSize", "$ChunkSize") }
+    if ($Include) { $nodeArgs += @("--include", $Include) }
+    if ($Exclude) { $nodeArgs += @("--exclude", $Exclude) }
+    if ($Exclude -and $ExcludeMode) { $nodeArgs += @("--excludeMode", $ExcludeMode) }
 
-    # only forward excludeMode if exclude was provided
-    if ($Exclude -and $ExcludeMode) { $forward += @("--excludeMode", $ExcludeMode) }
+    Write-Host "Running: node $($nodeArgs -join ' ')" -ForegroundColor Cyan
+    & node @nodeArgs
 
-    # NPM requires `--` to forward args to the Node script
-    if ($forward.Count -gt 0) {
-        npm run combine -- @forward
-    }
-    else {
-        npm run combine
-    }
-
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 finally {
     Pop-Location
