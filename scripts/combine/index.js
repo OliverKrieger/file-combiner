@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { findProjectRoot } from "./root.js";
-import { loadConfig, normalizeConfig } from "./config.js";
+import { loadConfig, loadEnv, normalizeConfig } from "./config.js";
 import { parseCliArgs } from "./args.js";
 import { buildOptions } from "./options.js";
 import { sanitizeFilePart } from "./utils.js";
@@ -23,6 +23,7 @@ const outputDir = path.join(projectRoot, "output");
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
 try {
+    loadEnv(projectRoot);
     const cfg = normalizeConfig(loadConfig(projectRoot));
     const cli = parseCliArgs();
     const opts = buildOptions(cfg, cli);

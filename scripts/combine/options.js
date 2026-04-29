@@ -6,7 +6,9 @@ export function buildOptions(config, cli) {
     const sourceRaw = cli.path || config.vaultPath;
     const sourcePath = resolveDir(sourceRaw);
 
-    if (!sourcePath) throw new Error("Missing vaultPath in config and no --path provided.");
+    if (!sourcePath) {
+        throw new Error("Missing OBSIDIAN_VAULT_PATH in .env and no --path provided.");
+    }
 
     const chunkSize = cli.chunkSizeRaw != null ? Number(cli.chunkSizeRaw) : config.chunkSize;
     if (Number.isNaN(chunkSize)) throw new Error("--chunkSize must be a number.");
